@@ -86,9 +86,9 @@ class Gui:
             dialog.connect("delete_event", lambda w,e: dialog.destroy())
 
             # Radios
-            radio1 = gtk.RadioButton(None, "Import all {} tables".format(len(tables_names)))
-            radio2 = gtk.RadioButton(radio1, "Select tables to be imported")
-            dialog.vbox.pack_start(radio1, expand=False, fill=False, padding=5)
+            self.import_all_radio = gtk.RadioButton(None, "Import all {} tables".format(len(tables_names)))
+            radio2 = gtk.RadioButton(self.import_all_radio, "Select tables to be imported")
+            dialog.vbox.pack_start(self.import_all_radio, expand=False, fill=False, padding=5)
             dialog.vbox.pack_start(radio2, expand=False, fill=False, padding=5)
             # Synchronize toggle state with "sensitive" state of treeview
             radio2.connect('toggled', lambda w: self.toggle_frame.set_sensitive(w.get_active()))
@@ -119,8 +119,6 @@ class Gui:
             scroll = gtk.ScrolledWindow()
             scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             scroll.add(treeview)
-            # Add it to frame
-            # frame_vBox.pack_start(scroll, expand=False, fill=False, padding=5)
             # Pack
             frame_vBox.pack_start(scroll, expand=True, fill=True, padding=5)
 
@@ -134,6 +132,7 @@ class Gui:
 
             # Buttons
             button = gtk.Button(stock=gtk.STOCK_OK)
+            button.connect("clicked", self.on_ok_clicked)
             dialog.action_area.pack_end(button, expand=False, fill=False, padding=5)
 
             # Finaly
@@ -155,6 +154,20 @@ class Gui:
             if ev.keyval in [gtk.gdk.keyval_from_name('Return'), gtk.gdk.keyval_from_name('space')]:
                 path = widget.get_selection().get_selected_rows()[1][0]
                 self.model[path][1] = not self.model[path][1]
+
+    def on_ok_clicked(self, widget):
+        # Final step
+        if not self.import_all_radio.get_active():
+            selected_tables = []
+            self.model.foreach(
+                lambda model, path, iter:
+                    selected_tables.append(model[path][0]) if model[path][1] else None
+            )
+            if len(selected_tables) == 0:
+                error_message('No tables selected. Select at least one table in order to begin.')
+                return
+        print 'fin'
+        self.import_dialog.destroy()
 
 def error_message(message):
     msgbox = gtk.MessageDialog(
