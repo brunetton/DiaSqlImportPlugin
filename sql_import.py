@@ -113,6 +113,7 @@ class Gui:
             cell.connect("toggled", self.on_cell_toggled, model)  # When clicked, reflect click on model
             column = gtk.TreeViewColumn("Import", cell, active=1)
             treeview.append_column(column)
+            treeview.connect('key-press-event', self.on_treeview_keypress)
 
             # Let it scrollable
             scroll = gtk.ScrolledWindow()
@@ -149,6 +150,11 @@ class Gui:
         for e in self.model:
             e[1] = state
 
+    def on_treeview_keypress(self, widget, ev, data=None):
+        if ev.state == 0:  # No modifiers
+            if ev.keyval in [gtk.gdk.keyval_from_name('Return'), gtk.gdk.keyval_from_name('space')]:
+                path = widget.get_selection().get_selected_rows()[1][0]
+                self.model[path][1] = not self.model[path][1]
 
 def error_message(message):
     msgbox = gtk.MessageDialog(
