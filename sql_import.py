@@ -276,12 +276,6 @@ def get_columns_names(connection, table_name):
     result = connection.execute("SELECT column_name FROM information_schema.columns WHERE table_name='{}'".format(table_name))
     return [e[0] for e in result.fetchall()]
 
-def import_callback(data, flags):
-    try:
-        Gui()
-    except ImportError:
-        dia.message(2, "Dialog creation failed. Missing pygtk ?")
-
 def generate_diagram(connection, tables_names):
     diagram = DiaSchema()
     for table_name in tables_names:
@@ -289,8 +283,15 @@ def generate_diagram(connection, tables_names):
         diagram.addTable(table_name, columns)
     diagram.finalize()
 
+def import_callback(data, flags):
+    try:
+        Gui()
+    except ImportError:
+        dia.message(2, "Dialog creation failed. Missing pygtk ?")
+
+
 if __name__ == "__main__":
-    # Test gui display
+    # Test gui outside of Dia
     pygtk.require('2.0')
     Gui()
     gtk.main()
