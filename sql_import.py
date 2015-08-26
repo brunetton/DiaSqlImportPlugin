@@ -31,7 +31,7 @@ class Gui:
         if self.connection:
             self.connection_dialog.destroy()
             # self.connection_dialog.hide()
-            tables_names = get_tables_names(self.connection)
+            tables_names = get_tables_names(self.connection, self.db_schema)
             self.show_import_dialog(tables_names)
         else:
             self.show_connection_dialog()
@@ -48,23 +48,40 @@ class Gui:
             # Connection frame
             frame = gtk.Frame(label='DB Connection')
             vbox = gtk.VBox(spacing=5)
+
             ## label and entry
-            hbox = gtk.HBox(spacing=5)
+            hbox = gtk.HBox(spacing=0)
             ### label
-            elem = gtk.Label('Database url')
+            elem = gtk.Label('Database url:')
             hbox.pack_start(elem, expand=False, fill=False, padding=5)
             ### entry
             elem = gtk.Entry()
             elem. set_width_chars(50)
             self.db_connection_string_widget = elem
-            hbox.pack_start(elem, expand=False, fill=False, padding=5)
-            ### pack
-            vbox.pack_start(hbox, expand=False, fill=False, padding=5)
-            ## help message
+            hbox.pack_start(elem, expand=False, fill=False, padding=0)
+            ## pack
+            vbox.pack_start(hbox, expand=False, fill=False, padding=0)
+            # help message
+            hbox = gtk.HBox(spacing=0)  # "Useless" box only to avoid center strange effect
             elem = gtk.Label("Example: postgres://user:password@localhost:5432/mydb\n(look at Sqlalchemy's database-urls for more details)")
             elem.set_selectable(True)
             elem.set_can_focus(False)
-            vbox.pack_start(elem, expand=False, fill=False, padding=5)
+            hbox.pack_start(elem, expand=False, fill=False, padding=5)
+            ## pack
+            vbox.pack_start(hbox, expand=False, fill=False, padding=0)
+            ## schema input
+            hbox = gtk.HBox(spacing=0)
+            ### label
+            elem = gtk.Label('Schema:')
+            hbox.pack_start(elem, expand=False, fill=False, padding=5)
+            ### entry
+            elem = gtk.Entry()
+            elem.set_width_chars(20)
+            elem.set_text('public')
+            self.db_schema_string_widget = elem
+            hbox.pack_start(elem, expand=False, fill=False, padding=0)
+            ## pack
+            vbox.pack_start(hbox, expand=False, fill=False, padding=10)
 
             # Finaly
             frame.add(vbox)
@@ -84,6 +101,11 @@ class Gui:
     def on_connect_clicked(self, widget):
         # self.connection_dialog.hide()
         self.connection = db_connect(self.db_connection_string_widget.get_text())
+        if self.connection:
+            self.db_schema = self.db_schema_string_widget.get_text()
+            if not check_schema(self.connection, self.db_schema):
+                error_message("Invalid Schema: '{}'".format(self.db_schema))
+                return
         self.main()
 
     def show_import_dialog(self, tables_names):
@@ -280,9 +302,15 @@ def db_connect(connection_string):
         return False
     return db
 
+# Checks if given schema exists
+def check_schema(connection, schema):
+    query = "SELECT 1 FROM information_schema.schemata WHERE schema_name='{}'".format(schema)
+    return connection.execute(query).fetchall() != []
+
 # Return an array containing tables names
-def get_tables_names(connection):
-    result = connection.execute("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname='public'")
+def get_tables_names(connection, schema):
+    query = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname='{}'".format(schema)
+    result = connection.execute(query)
     return [e[0] for e in result.fetchall()]
 
 # Return an array of dicts containing informations about columns of given table
