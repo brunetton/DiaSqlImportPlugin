@@ -113,8 +113,8 @@ class Gui:
             model = gtk.ListStore(str, bool)
             self.model = model
             # Add tables names to model
-            for e in get_tables_names(self.connection):
-                model.append([e, True])
+            for table_name in tables_names:
+                model.append([table_name, True])
             treeview = gtk.TreeView(model=model)
             column = gtk.TreeViewColumn("Table", gtk.CellRendererText(), text=0)
             column.set_expand(True)
