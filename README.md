@@ -19,6 +19,9 @@ Simply put `sql_import.py` into your `~/.dia/python` directory (adapt it for non
 
 Lunch script from `Tools` menu: Tools > SqlImport
 
+## Found a bug ?
+
+Run dia from command line and **copy/paste trace** to bug request.
 
 ## TODO
 
