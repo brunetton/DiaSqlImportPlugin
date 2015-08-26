@@ -137,9 +137,24 @@ class Gui:
             checkbox = gtk.CheckButton("Check/uncheck all")
             checkbox.connect("toggled", self.on_bottom_check_toggled)
             frame_vBox.pack_start(checkbox, expand=False, fill=False, padding=0)
+            self.toggle_frame = frame
+            self.toggle_frame.set_sensitive(False)
 
             # Pack
             dialog.vbox.pack_start(frame, expand=True, fill=True, padding=5)
+
+            # Frame containing options
+            frame = gtk.Frame("Options")
+            frame_vBox = gtk.VBox()
+            frame.add(frame_vBox)
+            ## Options
+            checkbox = gtk.CheckButton("Add fields types")
+            checkbox.set_active(True)
+            self.options = {'add_types': checkbox}
+            ## Pack
+            frame_vBox.pack_start(checkbox, expand=False, fill=False, padding=5)
+            # Pack
+            dialog.vbox.pack_end(frame, expand=False, fill=False, padding=5)
 
             # Buttons
             button = gtk.Button(stock=gtk.STOCK_OK)
@@ -147,8 +162,6 @@ class Gui:
             dialog.action_area.pack_end(button, expand=False, fill=False, padding=5)
 
             # Finaly
-            self.toggle_frame = frame
-            self.toggle_frame.set_sensitive(False)
             dialog.show_all()
             self.import_dialog = dialog
 
@@ -181,7 +194,7 @@ class Gui:
             selected_tables = []
             self.model.foreach(lambda model, path, iter: selected_tables.append(model[path][0]))  # There should be a more Pythonic way to write it
         self.import_dialog.destroy()
-        generate_diagram(self.connection, selected_tables)
+        generate_diagram(self.connection, selected_tables, self.options)
 
 
 class DiaSchema :
@@ -191,14 +204,15 @@ class DiaSchema :
         self.active_layer = self.diagram.data.active_layer
         self.active_layer
 
-    def addTable(self, table_name, columns):
+    def addTable(self, table_name, columns_infos, add_types=True):
         oType = dia.get_object_type("UML - Class")
         o, h1, h2 = oType.create (0,0)  # New UML class object
         o.properties["name"] = table_name
         o.properties["visible_operations"] = False  # No operations for now
         attributes = []
-        for name in columns :
-            attributes.append((name, '', '', '', 0, 0, 0))   # (name,type,value,comment,visibility,abstract,class_scope)
+        for col in columns_infos:
+            col_type = col['udt_name'] if add_types else ''
+            attributes.append((col['column_name'], col_type, '', '', 0, 0, 0))   # (name,type,value,comment,visibility,abstract,class_scope)
         o.properties["attributes"] = attributes
         self.active_layer.add_object(o)
 
@@ -271,16 +285,32 @@ def get_tables_names(connection):
     result = connection.execute("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname='public'")
     return [e[0] for e in result.fetchall()]
 
-# Return an array of columns names for given table name
-def get_columns_names(connection, table_name):
-    result = connection.execute("SELECT column_name FROM information_schema.columns WHERE table_name='{}'".format(table_name))
-    return [e[0] for e in result.fetchall()]
+# Return an array of dicts containing informations about columns of given table
+# ex:
+#    [{'column_name': u'i_customer', 'is_nullable': u'NO', 'udt_name': u'integer'},
+#     {'column_name': u'Name', 'is_nullable': u'NO', 'udt_name': u'character varying'},
+#     {'column_name': u'Address', 'is_nullable': u'NO', 'udt_name': u'character varying'},
+#     {'column_name': u'Tel', 'is_nullable': u'YES', 'udt_name': u'character varying'}]
+def get_columns_infos(connection, table_name):
+    columns = ['column_name', 'is_nullable', 'udt_name']
+    result = connection.execute("""
+        SELECT {}
+        FROM information_schema.columns
+        WHERE table_name = '{}'
+    """.format(','.join(columns), table_name))
+    # TODO: AND table_schema='{}'
+    # Transform resultset onto array of hashs, more clear for the rest of code
+    return [dict(zip(columns, row)) for row in result]
 
-def generate_diagram(connection, tables_names):
+# options is a dict of checkboxes
+def generate_diagram(connection, tables_names, options):
     diagram = DiaSchema()
     for table_name in tables_names:
-        columns = get_columns_names(connection, table_name)
-        diagram.addTable(table_name, columns)
+        columns_infos = get_columns_infos(connection, table_name)
+        diagram.addTable(table_name, columns_infos,
+            # generation options
+            add_types=options['add_types'].get_active()
+        )
     diagram.finalize()
 
 def import_callback(data, flags):
