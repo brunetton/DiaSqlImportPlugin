@@ -277,9 +277,6 @@ def get_columns_names(connection, table_name):
     result = connection.execute("SELECT column_name FROM information_schema.columns WHERE table_name='{}'".format(table_name))
     return [e[0] for e in result.fetchall()]
 
-def test_callback(data, flags):
-    generate_diagram(['table1'])
-
 def import_callback(data, flags):
     try:
         Gui()
@@ -300,5 +297,4 @@ if __name__ == "__main__":
     gtk.main()
 else:
     import dia
-    dia.register_callback("-- test --", "<Display>/Tools/Test", test_callback)
-    dia.register_callback("- Sql Import -", "<Display>/Tools/SqlImport", import_callback)
+    dia.register_callback("Sql Import", "<Display>/Tools/SqlImport", import_callback)

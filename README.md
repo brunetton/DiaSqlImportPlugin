@@ -15,6 +15,11 @@ This tool is designed to help generate schemas of large databases where Foreign 
 
 Simply put `sql_import.py` into your `~/.dia/python` directory (adapt it for non-Linux OS).
 
+## Usage
+
+Lunch script from `Tools` menu: Tools > SqlImport
+
+
 ## TODO
 
   * add types
