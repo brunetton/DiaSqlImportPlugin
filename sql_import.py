@@ -309,7 +309,7 @@ def check_schema(connection, schema):
 
 # Return an array containing tables names
 def get_tables_names(connection, schema):
-    query = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname='{}'".format(schema)
+    query = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname='{}' ORDER BY tablename".format(schema)
     result = connection.execute(query)
     return [e[0] for e in result.fetchall()]
 
