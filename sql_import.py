@@ -84,7 +84,6 @@ class Gui:
     def on_connect_clicked(self, widget):
         # self.connection_dialog.hide()
         self.connection = db_connect(self.db_connection_string_widget.get_text())
-        # dia.message(2, "show_connection_dialog")
         self.main()
 
     def show_import_dialog(self, tables_names):
