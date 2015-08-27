@@ -204,6 +204,7 @@ class Gui:
     def on_ok_clicked(self, widget):
         # Final step
         if not self.import_all_radio.get_active():
+            # Build a list of selected tables names
             selected_tables = []
             self.model.foreach(
                 lambda model, path, iter:
@@ -213,6 +214,7 @@ class Gui:
                 error_message('No tables selected. Select at least one table in order to begin.')
                 return
         else:
+            # Add all tables names to selected_tables
             selected_tables = []
             self.model.foreach(lambda model, path, iter: selected_tables.append(model[path][0]))  # There should be a more Pythonic way to write it
         self.import_dialog.destroy()
