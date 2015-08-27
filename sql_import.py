@@ -225,7 +225,11 @@ class Gui:
             selected_tables = []
             self.model.foreach(lambda model, path, iter: selected_tables.append(model[path][0]))  # There should be a more Pythonic way to write it
         self.import_dialog.destroy()
-        generate_diagram(self.connection, self.db_schema, selected_tables, self.options)
+        # Generate options. Example: options:  {'sort_fields': True, 'add_types': True}
+        options = {}
+        for name, checkbox in self.options.iteritems():
+            options[name] = checkbox.get_active()
+        generate_diagram(self.connection, self.db_schema, selected_tables, options)
 
 
 class DiaSchema :
@@ -346,15 +350,11 @@ def get_columns_infos(connection, table_name, schema, sort=False):
     # Transform resultset onto array of hashs, more clear for the rest of code
     return [dict(zip(columns, row)) for row in result]
 
-# options is a dict of checkboxes
 def generate_diagram(connection, schema, tables_names, options):
     diagram = DiaSchema()
     for table_name in tables_names:
         columns_infos = get_columns_infos(connection, table_name, schema, options['sort_fields'])
-        diagram.addTable(table_name, columns_infos,
-            # generation options
-            add_types=options['add_types'].get_active()
-        )
+        diagram.addTable(table_name, columns_infos, add_types=options['add_types'])
     diagram.finalize()
 
 def import_callback(data, flags):
