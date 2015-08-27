@@ -225,7 +225,7 @@ class Gui:
             selected_tables = []
             self.model.foreach(lambda model, path, iter: selected_tables.append(model[path][0]))  # There should be a more Pythonic way to write it
         self.import_dialog.destroy()
-        generate_diagram(self.connection, selected_tables, self.options)
+        generate_diagram(self.connection, self.db_schema, selected_tables, self.options)
 
 
 class DiaSchema :
@@ -328,24 +328,29 @@ def get_tables_names(connection, schema):
 #     {'column_name': u'Name', 'is_nullable': u'NO', 'udt_name': u'character varying'},
 #     {'column_name': u'Address', 'is_nullable': u'NO', 'udt_name': u'character varying'},
 #     {'column_name': u'Tel', 'is_nullable': u'YES', 'udt_name': u'character varying'}]
-def get_columns_infos(connection, table_name, sort=False):
+def get_columns_infos(connection, table_name, schema, sort=False):
     columns = ['column_name', 'is_nullable', 'udt_name']
     order_by = 'ORDER BY column_name' if sort else ''
     result = connection.execute("""
-        SELECT {}
+        SELECT {columns}
         FROM information_schema.columns
-        WHERE table_name = '{}'
-        {}
-    """.format(','.join(columns), table_name, order_by))
-    # TODO: AND table_schema='{}'
+        WHERE table_name = '{table_name}'
+        AND table_schema = '{schema}'
+        {order_by}
+    """.format(
+            columns=','.join(columns),
+            table_name=table_name,
+            schema=schema,
+            order_by=order_by)
+    )
     # Transform resultset onto array of hashs, more clear for the rest of code
     return [dict(zip(columns, row)) for row in result]
 
 # options is a dict of checkboxes
-def generate_diagram(connection, tables_names, options):
+def generate_diagram(connection, schema, tables_names, options):
     diagram = DiaSchema()
     for table_name in tables_names:
-        columns_infos = get_columns_infos(connection, table_name, options['sort_fields'])
+        columns_infos = get_columns_infos(connection, table_name, schema, options['sort_fields'])
         diagram.addTable(table_name, columns_infos,
             # generation options
             add_types=options['add_types'].get_active()
