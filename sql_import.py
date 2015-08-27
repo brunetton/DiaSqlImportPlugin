@@ -25,7 +25,8 @@ class Gui:
 
         # DEBUG
         # self.connection = db_connect("postgres://webserver:webserver@localhost:5432/test")
-        # self.show_import_dialog(get_tables_names(self.connection))
+        # self.db_schema = 'public'
+        # self.show_import_dialog(get_tables_names(self.connection, self.db_schema))
 
     def main(self):
         if self.connection:
