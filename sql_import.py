@@ -136,7 +136,7 @@ class Gui:
             self.model = model
             # Add tables names to model
             for table_name in tables_names:
-                model.append([table_name, True])
+                model.append([table_name, False])
             treeview = gtk.TreeView(model=model)
             column = gtk.TreeViewColumn("Table", gtk.CellRendererText(), text=0)
             column.set_expand(True)
