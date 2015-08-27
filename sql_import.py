@@ -167,14 +167,20 @@ class Gui:
 
             # Frame containing options
             frame = gtk.Frame("Options")
-            frame_vBox = gtk.VBox()
-            frame.add(frame_vBox)
-            ## Options
+            frame_hBox = gtk.HBox()
+            frame.add(frame_hBox)
+            ## Option
             checkbox = gtk.CheckButton("Add fields types")
             checkbox.set_active(True)
             self.options = {'add_types': checkbox}
             ## Pack
-            frame_vBox.pack_start(checkbox, expand=False, fill=False, padding=5)
+            frame_hBox.pack_start(checkbox, expand=False, fill=False, padding=5)
+            ## Option
+            checkbox = gtk.CheckButton("Sort fields")
+            checkbox.set_active(True)
+            self.options['sort_fields'] = checkbox
+            ## Pack
+            frame_hBox.pack_start(checkbox, expand=False, fill=False, padding=5)
             # Pack
             dialog.vbox.pack_end(frame, expand=False, fill=False, padding=5)
 
@@ -321,13 +327,15 @@ def get_tables_names(connection, schema):
 #     {'column_name': u'Name', 'is_nullable': u'NO', 'udt_name': u'character varying'},
 #     {'column_name': u'Address', 'is_nullable': u'NO', 'udt_name': u'character varying'},
 #     {'column_name': u'Tel', 'is_nullable': u'YES', 'udt_name': u'character varying'}]
-def get_columns_infos(connection, table_name):
+def get_columns_infos(connection, table_name, sort=False):
     columns = ['column_name', 'is_nullable', 'udt_name']
+    order_by = 'ORDER BY column_name' if sort else ''
     result = connection.execute("""
         SELECT {}
         FROM information_schema.columns
         WHERE table_name = '{}'
-    """.format(','.join(columns), table_name))
+        {}
+    """.format(','.join(columns), table_name, order_by))
     # TODO: AND table_schema='{}'
     # Transform resultset onto array of hashs, more clear for the rest of code
     return [dict(zip(columns, row)) for row in result]
@@ -336,7 +344,7 @@ def get_columns_infos(connection, table_name):
 def generate_diagram(connection, tables_names, options):
     diagram = DiaSchema()
     for table_name in tables_names:
-        columns_infos = get_columns_infos(connection, table_name)
+        columns_infos = get_columns_infos(connection, table_name, options['sort_fields'])
         diagram.addTable(table_name, columns_infos,
             # generation options
             add_types=options['add_types'].get_active()
