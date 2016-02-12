@@ -25,6 +25,5 @@ Run dia from command line and **copy/paste trace** to bug request.
 
 ## TODO
 
-  * add types
   * add relations between tables
   * support for other databases types (if you need it, make a pull request, or a fill a bug if you're not in a hurry !)
